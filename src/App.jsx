@@ -1,5 +1,10 @@
 import {useState } from "react";
-
+import Navbar from "./components/Navbar";
+import Dashboard from "./components/Dashboard.jsx";
+import Students from "./components/Students.jsx";
+import Classes from "./components/Classes.jsx";
+import Attendance from "./components/Attendance.jsx";
+import Results from "./components/Results.jsx";
 function App() {
   const [name, setName] = useState("");
   const [admission, setAdmission] = useState("");
@@ -188,271 +193,78 @@ function App() {
 
   return (
     <div>
-      <nav className="navbar">
-        <h2>SMS</h2>
-
-        <div>
-          <button onClick={() => setActivePage("dashboard")}>Dashboard</button>
-          <button onClick={() => setActivePage("students")}>Students</button>
-          <button onClick={() => setActivePage("classes")}>Classes</button>
-          <button onClick={() => setActivePage("results")}>Results</button>
-          <button onClick={() => setActivePage("attendance")}>Attendance</button>
-        </div>
-      </nav>
-
-      <p>Current page: {activePage}</p>
+      <Navbar activePage={activePage} setActivePage={setActivePage} />
 
       {activePage === "dashboard" && (
-        <div>
-          <h1>Student Management System</h1>
-          <h2>Dashboard</h2>
+  <Dashboard
+    totalStudents={totalStudents}
+    maleStudents={maleStudents}
+    femaleStudents={femaleStudents}
+  />
+)}
 
-          <div className="dashboard">
-            <div className="card">
-              <h3>Total Students</h3>
-              <p>{totalStudents}</p>
-            </div>
+      
+{activePage === "students" && (
+  <Students
+    handleSubmit={handleSubmit}
+    name={name}
+    setName={setName}
+    admission={admission}
+    setAdmission={setAdmission}
+    gender={gender}
+    setGender={setGender}
+    dob={dob}
+    setDob={setDob}
+    studentGrade={studentGrade}
+    setStudentGrade={setStudentGrade}
+    classes={classes}
+    guardian={guardian}
+    setGuardian={setGuardian}
+    phone={phone}
+    setPhone={setPhone}
+    editId={editId}
+    clearForm={clearForm}
+    search={search}
+    setSearch={setSearch}
+    filteredStudents={filteredStudents}
+    handleEdit={handleEdit}
+    handleDelete={handleDelete}
+  />
+)}
 
-            <div className="card">
-              <h3>Male Students</h3>
-              <p>{maleStudents}</p>
-            </div>
 
-            <div className="card">
-              <h3>Female Students</h3>
-              <p>{femaleStudents}</p>
-            </div>
-          </div>
-        </div>
-      )}
+{activePage === "classes" && (
+  <Classes
+    className={className}
+    setClassName={setClassName}
+    classTeacher={classTeacher}
+    setClassTeacher={setClassTeacher}
+    handleClassSubmit={handleClassSubmit}
+    clearClassForm={clearClassForm}
+    editClassId={editClassId}
+    classes={classes}
+    handleClassEdit={handleClassEdit}
+    handleClassDelete={handleClassDelete}
+  />
+)}
 
-      {activePage === "students" && (
-        <div>
-          <h2>Add Student</h2>
 
-          <form onSubmit={handleSubmit}>
-            <label>Full Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+      
+{activePage === "attendance" && (
+  <Attendance
+    handleAttendanceSubmit={handleAttendanceSubmit}
+    attendanceStudent={attendanceStudent}
+    setAttendanceStudent={setAttendanceStudent}
+    attendanceDate={attendanceDate}
+    setAttendanceDate={setAttendanceDate}
+    attendanceStatus={attendanceStatus}
+    setAttendanceStatus={setAttendanceStatus}
+  />
+)}
 
-            <label>Admission Number</label>
-            <input
-              type="text"
-              value={admission}
-              onChange={(e) => setAdmission(e.target.value)}
-            />
+{activePage === "results" && <Results />}
 
-            <label>Gender</label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
 
-            <label>Date of Birth</label>
-            <input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-            />
-
-            <label>Grade</label>
-            <select
-              value={studentGrade}
-              onChange={(e) => setStudentGrade(e.target.value)}
-            >
-              <option value="">Select Grade</option>
-              {classes.map((classItem) => (
-                <option key={classItem.id} value={classItem.className}>
-                  {classItem.className}
-                </option>
-              ))}
-            </select>
-
-            <label>Parent/Guardian</label>
-            <input
-              type="text"
-              value={guardian}
-              onChange={(e) => setGuardian(e.target.value)}
-            />
-
-            <label>Phone</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-
-            <button type="submit">
-              {editId === null ? "Save Student" : "Update Student"}
-            </button>
-
-            <button type="button" onClick={clearForm}>
-              Clear Form
-            </button>
-          </form>
-
-          <h2>Student List</h2>
-
-          <input
-            type="text"
-            placeholder="Search Student..."
-            className="search-box"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Admission No.</th>
-                <th>Gender</th>
-                <th>Grade</th>
-                <th>Dob</th>
-                <th>Guardian</th>
-                <th>Phone</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredStudents.map((student) => (
-                <tr key={student.id}>
-                  <td>{student.name}</td>
-                  <td>{student.admission}</td>
-                  <td>{student.gender}</td>
-                  <td>{student.studentGrade}</td>
-                  <td>{student.dob}</td>
-                  <td>{student.guardian}</td>
-                  <td>{student.phone}</td>
-                  <td>
-                    <button onClick={() => handleEdit(student.id)}>Edit</button>
-                    <button onClick={() => handleDelete(student.id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activePage === "classes" && (
-        <div>
-          <h2>Classes Page</h2>
-
-          <form onSubmit={handleClassSubmit}>
-            <label>Class/Grade</label>
-            <input
-              type="text"
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-            />
-
-            <label>Class Teacher</label>
-            <input
-              type="text"
-              value={classTeacher}
-              onChange={(e) => setClassTeacher(e.target.value)}
-            />
-
-            <button type="submit">Save Class</button>
-            <button type="button" onClick={clearClassForm}>Clear</button>
-          </form>
-
-          <h3>Saved Classes</h3>
-          <ul>
-            {classes.map((classItem) => (
-              <React.Fragment key={classItem.id}>
-                <li>
-                  {classItem.className} - {classItem.classTeacher}
-                </li>
-                <button onClick={() => handleEdit(classItem.id)}>Edit</button>
-              </React.Fragment>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {activePage === "results" && (
-        <div>
-          <h2>Results Page</h2>
-
-          <form onSubmit={handleResultSubmit}>
-            <label>Student Name</label>
-            <input
-              type="text"
-              value={resultStudent}
-              onChange={(e) => setResultStudent(e.target.value)}
-            />
-
-            <label>Subject</label>
-            <input
-              type="text"
-              value={resultSubject}
-              onChange={(e) => setResultSubject(e.target.value)}
-            />
-
-            <label>Marks</label>
-            <input
-              type="number"
-              value={marks}
-              onChange={(e) => setMarks(e.target.value)}
-            />
-
-            <button type="submit">Save Result</button>
-          </form>
-          <h3>Saved Results</h3>
-
-          <ul>
-            {results.map((result) => (
-              <li key={result.id}>
-                {result.student} - {result.subject} - {result.marks} marks
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {activePage === "attendance" && (
-        <div>
-          <h2>Attendance Page</h2>
-
-          <form onSubmit={handleAttendanceSubmit}>
-            <label>Student Name</label>
-            <input
-              type="text"
-              value={attendanceStudent}
-              onChange={(e) => setAttendanceStudent(e.target.value)}
-            />
-
-            <label>Date</label>
-            <input
-              type="date"
-              value={attendanceDate}
-              onChange={(e) => setAttendanceDate(e.target.value)}
-            />
-
-            <label>Status</label>
-            <select
-              value={attendanceStatus}
-              onChange={(e) => setAttendanceStatus(e.target.value)}
-            >
-              <option value="">Select Status</option>
-              <option value="Present">Present</option>
-              <option value="Absent">Absent</option>
-            </select>
-
-            <button type="submit">Save Attendance</button>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
