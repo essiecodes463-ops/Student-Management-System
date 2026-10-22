@@ -1,10 +1,12 @@
-import {useState } from "react";
+
+import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard.jsx";
 import Students from "./components/Students.jsx";
 import Classes from "./components/Classes.jsx";
 import Attendance from "./components/Attendance.jsx";
 import Results from "./components/Results.jsx";
+
 function App() {
   const [name, setName] = useState("");
   const [admission, setAdmission] = useState("");
@@ -13,6 +15,7 @@ function App() {
   const [studentGrade, setStudentGrade] = useState("");
   const [guardian, setGuardian] = useState("");
   const [phone, setPhone] = useState("");
+
   const [students, setStudents] = useState([]);
   const [editId, setEditId] = useState(null);
   const [search, setSearch] = useState("");
@@ -21,7 +24,7 @@ function App() {
   const [className, setClassName] = useState("");
   const [classTeacher, setClassTeacher] = useState("");
   const [classes, setClasses] = useState([]);
-  const [classEditId, setClassEditId] = useState(null);
+  const [editClassId, setEditClassId] = useState(null);
 
   const [resultStudent, setResultStudent] = useState("");
   const [resultSubject, setResultSubject] = useState("");
@@ -29,9 +32,45 @@ function App() {
   const [results, setResults] = useState([]);
 
   const [attendanceStudent, setAttendanceStudent] = useState("");
-  const [attendanceDate, setAttendanceDate]=useState("");
-  const [attendanceStatus, setAttendanceStatus]= useState("");
-  const [attendance, setAttendance]= useState([]);
+  const [attendanceDate, setAttendanceDate] = useState("");
+  const [attendanceStatus, setAttendanceStatus] = useState("");
+  const [attendance, setAttendance] = useState([]);
+
+  // Load saved students from MySQL when the app opens.
+  useEffect(() => {
+    async function loadStudents() {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/students"
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load students");
+        }
+
+        const data = await response.json();
+
+        const formattedStudents = data.map((student) => ({
+          id: student.id,
+          name: student.full_name,
+          guardian: student.parent_guardian || "",
+          admission: student.admission_number,
+          gender: student.gender || "",
+          dob: student.date_of_birth
+            ? String(student.date_of_birth).slice(0, 10)
+            : "",
+          studentGrade: student.student_grade || "",
+          phone: "",
+        }));
+
+        setStudents(formattedStudents);
+      } catch (error) {
+        console.error("Error loading students:", error);
+      }
+    }
+
+    loadStudents();
+  }, []);
 
   const clearForm = () => {
     setName("");
@@ -47,10 +86,12 @@ function App() {
   const clearClassForm = () => {
     setClassName("");
     setClassTeacher("");
-    setClassEditId(null);
+    setEditClassId(null);
   };
 
-  function handleSubmit(e) {
+  // Save new students to MySQL.
+  // Editing is still local until we connect the update route.
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const student = {
@@ -65,13 +106,54 @@ function App() {
     };
 
     if (editId === null) {
-      setStudents((currentStudents) => [...currentStudents, student]);
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/students",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name,
+              guardian,
+              admission,
+              gender,
+              dob,
+              studentGrade,
+            }),
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert(result.message || "Failed to save student.");
+          return;
+        }
+
+        setStudents((currentStudents) => [
+          ...currentStudents,
+          { ...student, id: result.id },
+        ]);
+
+        alert("Student saved successfully!");
+      } catch (error) {
+        console.error("Error saving student:", error);
+        alert(
+          "Could not connect to the backend. Check that it is running."
+        );
+        return;
+      }
     } else {
       setStudents((currentStudents) =>
         currentStudents.map((currentStudent) =>
-          currentStudent.id === editId ? { ...student, id: currentStudent.id } : currentStudent
+          currentStudent.id === editId
+            ? { ...student, id: currentStudent.id }
+            : currentStudent
         )
       );
+
       setEditId(null);
     }
 
@@ -84,32 +166,41 @@ function App() {
     if (!className.trim() || !classTeacher.trim()) return;
 
     const classData = {
-      id: classEditId ?? Date.now(),
+      id: editClassId ?? Date.now(),
       className: className.trim(),
       classTeacher: classTeacher.trim(),
     };
 
-    if (classEditId === null) {
-      setClasses((currentClasses) => [...currentClasses, classData]);
+    if (editClassId === null) {
+      setClasses((currentClasses) => [
+        ...currentClasses,
+        classData,
+      ]);
     } else {
       setClasses((currentClasses) =>
         currentClasses.map((classItem) =>
-          classItem.id === classEditId ? { ...classItem, ...classData } : classItem
+          classItem.id === editClassId
+            ? { ...classItem, ...classData }
+            : classItem
         )
       );
-      setClassEditId(null);
+
+      setEditClassId(null);
     }
 
     clearClassForm();
   };
 
   const handleClassEdit = (id) => {
-    const classToEdit = classes.find((classItem) => classItem.id === id);
+    const classToEdit = classes.find(
+      (classItem) => classItem.id === id
+    );
+
     if (!classToEdit) return;
 
     setClassName(classToEdit.className);
     setClassTeacher(classToEdit.classTeacher);
-    setClassEditId(id);
+    setEditClassId(id);
   };
 
   const handleClassDelete = (id) => {
@@ -117,30 +208,36 @@ function App() {
       currentClasses.filter((classItem) => classItem.id !== id)
     );
 
-    if (classEditId === id) {
+    if (editClassId === id) {
       clearClassForm();
     }
   };
 
   const handleResultSubmit = (e) => {
     e.preventDefault();
-     const newResult ={
-      id:Date.now(),
+
+    const newResult = {
+      id: Date.now(),
       student: resultStudent,
       subject: resultSubject,
-      marks: marks,
-     };
-
-     setResults([...results, newResult]);
-
-     setResultStudent("")
-     setResultSubject("")
-     setMarks("")
+      marks,
     };
 
+    setResults((currentResults) => [
+      ...currentResults,
+      newResult,
+    ]);
+
+    setResultStudent("");
+    setResultSubject("");
+    setMarks("");
+  };
 
   const handleEdit = (id) => {
-    const student = students.find((student) => student.id === id);
+    const student = students.find(
+      (currentStudent) => currentStudent.id === id
+    );
+
     if (!student) return;
 
     setName(student.name);
@@ -161,7 +258,9 @@ function App() {
   };
 
   const filteredStudents = students.filter((student) =>
-    student.name.toLowerCase().includes(search.toLowerCase())
+    (student.name || "")
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   const totalStudents = students.length;
@@ -184,7 +283,10 @@ function App() {
       status: attendanceStatus,
     };
 
-    setAttendance((currentAttendance) => [...currentAttendance, newAttendance]);
+    setAttendance((currentAttendance) => [
+      ...currentAttendance,
+      newAttendance,
+    ]);
 
     setAttendanceStudent("");
     setAttendanceDate("");
@@ -193,78 +295,75 @@ function App() {
 
   return (
     <div>
-      <Navbar activePage={activePage} setActivePage={setActivePage} />
+      <Navbar
+        activePage={activePage}
+        setActivePage={setActivePage}
+      />
 
       {activePage === "dashboard" && (
-  <Dashboard
-    totalStudents={totalStudents}
-    maleStudents={maleStudents}
-    femaleStudents={femaleStudents}
-  />
-)}
+        <Dashboard
+          totalStudents={totalStudents}
+          maleStudents={maleStudents}
+          femaleStudents={femaleStudents}
+        />
+      )}
 
-      
-{activePage === "students" && (
-  <Students
-    handleSubmit={handleSubmit}
-    name={name}
-    setName={setName}
-    admission={admission}
-    setAdmission={setAdmission}
-    gender={gender}
-    setGender={setGender}
-    dob={dob}
-    setDob={setDob}
-    studentGrade={studentGrade}
-    setStudentGrade={setStudentGrade}
-    classes={classes}
-    guardian={guardian}
-    setGuardian={setGuardian}
-    phone={phone}
-    setPhone={setPhone}
-    editId={editId}
-    clearForm={clearForm}
-    search={search}
-    setSearch={setSearch}
-    filteredStudents={filteredStudents}
-    handleEdit={handleEdit}
-    handleDelete={handleDelete}
-  />
-)}
+      {activePage === "students" && (
+        <Students
+          handleSubmit={handleSubmit}
+          name={name}
+          setName={setName}
+          admission={admission}
+          setAdmission={setAdmission}
+          gender={gender}
+          setGender={setGender}
+          dob={dob}
+          setDob={setDob}
+          studentGrade={studentGrade}
+          setStudentGrade={setStudentGrade}
+          classes={classes}
+          guardian={guardian}
+          setGuardian={setGuardian}
+          phone={phone}
+          setPhone={setPhone}
+          editId={editId}
+          clearForm={clearForm}
+          search={search}
+          setSearch={setSearch}
+          filteredStudents={filteredStudents}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
+      )}
 
+      {activePage === "classes" && (
+        <Classes
+          className={className}
+          setClassName={setClassName}
+          classTeacher={classTeacher}
+          setClassTeacher={setClassTeacher}
+          handleClassSubmit={handleClassSubmit}
+          clearClassForm={clearClassForm}
+          editClassId={editClassId}
+          classes={classes}
+          handleClassEdit={handleClassEdit}
+          handleClassDelete={handleClassDelete}
+        />
+      )}
 
-{activePage === "classes" && (
-  <Classes
-    className={className}
-    setClassName={setClassName}
-    classTeacher={classTeacher}
-    setClassTeacher={setClassTeacher}
-    handleClassSubmit={handleClassSubmit}
-    clearClassForm={clearClassForm}
-    editClassId={editClassId}
-    classes={classes}
-    handleClassEdit={handleClassEdit}
-    handleClassDelete={handleClassDelete}
-  />
-)}
+      {activePage === "attendance" && (
+        <Attendance
+          handleAttendanceSubmit={handleAttendanceSubmit}
+          attendanceStudent={attendanceStudent}
+          setAttendanceStudent={setAttendanceStudent}
+          attendanceDate={attendanceDate}
+          setAttendanceDate={setAttendanceDate}
+          attendanceStatus={attendanceStatus}
+          setAttendanceStatus={setAttendanceStatus}
+        />
+      )}
 
-
-      
-{activePage === "attendance" && (
-  <Attendance
-    handleAttendanceSubmit={handleAttendanceSubmit}
-    attendanceStudent={attendanceStudent}
-    setAttendanceStudent={setAttendanceStudent}
-    attendanceDate={attendanceDate}
-    setAttendanceDate={setAttendanceDate}
-    attendanceStatus={attendanceStatus}
-    setAttendanceStatus={setAttendanceStatus}
-  />
-)}
-
-{activePage === "results" && <Results />}
-
-
+      {activePage === "results" && <Results />}
     </div>
   );
 }

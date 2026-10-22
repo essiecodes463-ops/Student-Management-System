@@ -1,3 +1,4 @@
+
 function Classes({
   className,
   setClassName,
@@ -8,26 +9,36 @@ function Classes({
   editClassId,
   classes,
   handleClassEdit,
-  handleClassDelete
+  handleClassDelete,
 }) {
   return (
-    <div>
-      <h2>Manage Classes</h2>
+    <div className="classes-page">
+      <h2>Class Management</h2>
 
       <form onSubmit={handleClassSubmit}>
-        <label>Class Name</label>
-        <input
-          type="text"
-          value={className}
-          onChange={(e) => setClassName(e.target.value)}
-        />
+        <div>
+          <label htmlFor="class-name">Class / Grade Name</label>
+          <input
+            id="class-name"
+            type="text"
+            value={className}
+            onChange={(e) => setClassName(e.target.value)}
+            placeholder="e.g. Grade 5"
+            required
+          />
+        </div>
 
-        <label>Class Teacher</label>
-        <input
-          type="text"
-          value={classTeacher}
-          onChange={(e) => setClassTeacher(e.target.value)}
-        />
+        <div>
+          <label htmlFor="class-teacher">Class Teacher</label>
+          <input
+            id="class-teacher"
+            type="text"
+            value={classTeacher}
+            onChange={(e) => setClassTeacher(e.target.value)}
+            placeholder="Enter teacher's name"
+            required
+          />
+        </div>
 
         <button type="submit">
           {editClassId === null ? "Save Class" : "Update Class"}
@@ -38,34 +49,51 @@ function Classes({
         </button>
       </form>
 
-      <h2>Class List</h2>
+      <hr />
 
-      <table>
-        <thead>
-          <tr>
-            <th>Class Name</th>
-            <th>Class Teacher</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+      <h3>Registered Classes</h3>
 
-        <tbody>
-          {classes.map((classItem) => (
-            <tr key={classItem.id}>
-              <td>{classItem.className}</td>
-              <td>{classItem.classTeacher}</td>
-              <td>
-                <button onClick={() => handleClassEdit(classItem.id)}>
-                  Edit
-                </button>
-                <button onClick={() => handleClassDelete(classItem.id)}>
-                  Delete
-                </button>
-              </td>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Class / Grade</th>
+              <th>Class Teacher</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {classes.length === 0 ? (
+              <tr>
+                <td colSpan="3">No classes registered yet.</td>
+              </tr>
+            ) : (
+              classes.map((classItem) => (
+                <tr key={classItem.id}>
+                  <td>{classItem.className}</td>
+                  <td>{classItem.classTeacher}</td>
+                  <td>
+                    <button
+                      type="button"
+                      onClick={() => handleClassEdit(classItem.id)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleClassDelete(classItem.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
