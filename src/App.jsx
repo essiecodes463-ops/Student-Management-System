@@ -145,17 +145,51 @@ function App() {
         );
         return;
       }
+    
     } else {
-      setStudents((currentStudents) =>
-        currentStudents.map((currentStudent) =>
-          currentStudent.id === editId
-            ? { ...student, id: currentStudent.id }
-            : currentStudent
-        )
-      );
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/students/${editId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name,
+              guardian,
+              admission,
+              gender,
+              dob,
+              studentGrade,
+            }),
+          }
+        );
 
-      setEditId(null);
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert(result.message || "Failed to update student.");
+          return;
+        }
+
+        setStudents((currentStudents) =>
+          currentStudents.map((currentStudent) =>
+            currentStudent.id === editId
+              ? { ...student, id: editId }
+              : currentStudent
+          )
+        );
+
+        alert("Student updated successfully!");
+        setEditId(null);
+      } catch (error) {
+        console.error("Error updating student:", error);
+        alert("Could not connect to the backend.");
+        return;
+      }
     }
+
 
     clearForm();
   }
@@ -251,11 +285,40 @@ function App() {
     setEditId(id);
   };
 
-  const handleDelete = (id) => {
-    setStudents((currentStudents) =>
-      currentStudents.filter((student) => student.id !== id)
+  
+  const handleDelete = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this student?"
     );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/students/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.message || "Failed to delete student.");
+        return;
+      }
+
+      setStudents((currentStudents) =>
+        currentStudents.filter((student) => student.id !== id)
+      );
+
+      alert("Student deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      alert("Could not connect to the backend.");
+    }
   };
+
 
   const filteredStudents = students.filter((student) =>
     (student.name || "")
